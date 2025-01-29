@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -13,7 +14,9 @@ const Home = () => {
   // Invoice Form State
   const [form, setForm] = useState({
     clientName: "",
+    mobileNumber: "",
     amount: "",
+    billingDate: "",
     dueDate: "",
   });
 
@@ -24,21 +27,30 @@ const Home = () => {
 
   // Handle Invoice Submission
   const handleSubmit = async () => {
-    if (!form.clientName || !form.amount || !form.dueDate) {
+    if (!form.clientName || !form.mobileNumber || !form.amount || !form.billingDate || !form.dueDate) {
       Alert.alert("Error", "Please fill all fields");
       return;
     }
-
+  
+    // Validate Mobile Number as String
+    if (!/^\d{10,15}$/.test(form.mobileNumber)) {
+      Alert.alert("Error", "Invalid mobile number format (must be 10-15 digits)");
+      return;
+    }
+  
     try {
       const result = await createInvoice(
         form.clientName,
+        String(form.mobileNumber),  // 🔹 Ensure mobileNumber is a string
         form.amount,
+        form.billingDate,
         form.dueDate
       );
+  
       console.log("Invoice successfully created:", result);
 
       // Reset Form
-      setForm({ clientName: "", amount: "", dueDate: "" });
+      setForm({ clientName: "", mobileNumber: "", amount: "", billingDate: "", dueDate: "" });
 
       Alert.alert("Success", "Invoice created successfully!");
     } catch (error) {
@@ -66,6 +78,16 @@ const Home = () => {
           onChangeText={(text) => handleChange("clientName", text)}
         />
 
+        <Text className="text-white mb-2">Mobile Number</Text>
+        <TextInput
+          className="bg-gray-700 text-white p-3 rounded-lg mb-3"
+          placeholder="Enter mobile number"
+          placeholderTextColor="#A0A0A0"
+          keyboardType="numeric"
+          value={form.mobileNumber}
+          onChangeText={(text) => handleChange("mobileNumber", text)}
+        />
+
         <Text className="text-white mb-2">Amount</Text>
         <TextInput
           className="bg-gray-700 text-white p-3 rounded-lg mb-3"
@@ -74,6 +96,15 @@ const Home = () => {
           keyboardType="numeric"
           value={form.amount}
           onChangeText={(text) => handleChange("amount", text)}
+        />
+
+        <Text className="text-white mb-2">Billing Date</Text>
+        <TextInput
+          className="bg-gray-700 text-white p-3 rounded-lg mb-3"
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor="#A0A0A0"
+          value={form.billingDate}
+          onChangeText={(text) => handleChange("billingDate", text)}
         />
 
         <Text className="text-white mb-2">Due Date</Text>

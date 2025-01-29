@@ -64,29 +64,38 @@ export async function signOut() {
 // ✅ 2️⃣ Invoice Management Functions
 
 // 🔹 Function to Create Invoice
-export async function createInvoice(clientName, amount, dueDate) {
+export async function createInvoice(clientName, mobileNumber, amount, billingDate, dueDate) {
   try {
-    // Validate User Authentication
-    const user = await account.get(); // Check if user is logged in
+    const user = await account.get();
     if (!user) throw new Error("User not authenticated");
 
-    // Validate Required Fields
-    if (!clientName || !amount || !dueDate) throw new Error("Missing fields");
+    if (!clientName || !mobileNumber || !amount || !billingDate || !dueDate)
+      throw new Error("Missing fields");
 
     // Convert Amount to Number
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount)) throw new Error("Invalid amount format");
 
+    // Ensure Mobile Number is a String
+    const mobileNumberString = String(mobileNumber); 
+
+    // Validate Mobile Number Format
+    if (!/^\d{10,15}$/.test(mobileNumberString)) {
+      throw new Error("Invalid mobile number format (must be 10-15 digits)");
+    }
+
     // Create Invoice Entry
     const newInvoice = await databases.createDocument(
       appwriteConfig.databaseId,
       appwriteConfig.invoiceCollectionId,
-      ID.unique(), // Unique ID for each invoice
+      ID.unique(),
       {
         clientName,
+        mobileNumber: mobileNumberString,  // 🔹 Ensure it's a string here
         amount: parsedAmount,
+        billingDate,
         dueDate,
-        userId: user.$id, // Storing which user created it
+        userId: user.$id,
       }
     );
 
@@ -112,3 +121,20 @@ export async function getAllInvoices() {
     throw new Error(error.message);
   }
 }
+// 🔹 Function to Delete Invoice
+export async function deleteInvoice(invoiceId) {
+  try {
+    await databases.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.invoiceCollectionId,
+      invoiceId
+    );
+    console.log("Invoice deleted successfully:", invoiceId);
+    return true;
+  } catch (error) {
+    console.error("Failed to delete invoice:", error.message);
+    throw new Error(error.message);
+  }
+}
+
+

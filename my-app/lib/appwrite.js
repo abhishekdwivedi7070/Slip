@@ -110,18 +110,37 @@ export async function createInvoice(clientName, mobileNumber, amount, billingDat
 }
 
 // 🔹 Function to Fetch All Invoices
+// 🔹 Function to Fetch Invoices Based on User Role
 export async function getAllInvoices() {
   try {
-    const invoices = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.invoiceCollectionId
-    );
+    const user = await account.get(); // Get the currently logged-in user
+    if (!user) throw new Error("User not authenticated");
+
+    let invoices;
+
+    // Check if the user has an "admin" label
+    if (user.labels && user.labels.includes("admin")) {
+      // ✅ Admin: Fetch all invoices
+      invoices = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.invoiceCollectionId
+      );
+    } else {
+      // ✅ Normal User: Fetch only invoices created by them
+      invoices = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.invoiceCollectionId,
+        [Query.equal("userId", user.$id)] // 🔹 Filter by userId
+      );
+    }
+
     return invoices.documents;
   } catch (error) {
     console.error("Failed to fetch invoices:", error.message);
     throw new Error(error.message);
   }
 }
+
 
 // 🔹 Function to Delete Invoice
 export async function deleteInvoice(invoiceId) {

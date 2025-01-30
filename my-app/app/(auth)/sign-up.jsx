@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, ScrollView, Dimensions, Alert, Image } from "react-native";
+import { View, Text, ScrollView, Dimensions, Alert, Image, TextInput } from "react-native";
+import { FontAwesome } from "@expo/vector-icons"; // ✅ Added icon for validation
 
 import { images } from "../../constants";
 import { createUser } from "../../lib/appwrite";
@@ -18,9 +19,21 @@ const SignUp = () => {
     password: "",
   });
 
+  // ✅ Password Validation Function
+  const isStrongPassword = (password) => {
+    return /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
+  };
+
   const submit = async () => {
     if (form.username === "" || form.email === "" || form.password === "") {
       Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    // ✅ Check if Password is Strong
+    if (!isStrongPassword(form.password)) {
+      Alert.alert("Error", "Password must be at least 8 characters, include an uppercase letter, a number, and a special character.");
+      return;
     }
 
     setSubmitting(true);
@@ -71,12 +84,23 @@ const SignUp = () => {
             keyboardType="email-address"
           />
 
-          <FormField
-            title="Password"
-            value={form.password}
-            handleChangeText={(e) => setForm({ ...form, password: e })}
-            otherStyles="mt-7"
-          />
+          {/* ✅ Password Field with Validation Icon */}
+          <View className="relative">
+            <FormField
+              title="Password"
+              value={form.password}
+              handleChangeText={(e) => setForm({ ...form, password: e })}
+              otherStyles="mt-7 pr-10" // Added padding for icon space
+            />
+
+            {/* ✅ Password Validation Icon */}
+            <FontAwesome
+              name={isStrongPassword(form.password) ? "check-circle" : "times-circle"}
+              size={20}
+              color={isStrongPassword(form.password) ? "green" : "red"}
+              style={{ position: "absolute", right: 10, top: 55 }}
+            />
+          </View>
 
           <CustomButton
             title="Sign Up"

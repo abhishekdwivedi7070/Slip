@@ -8,16 +8,16 @@ import { useGlobalContext } from "../../context/GlobalProvider";
 
 const TabIcon = ({ icon, color, name, focused }) => {
   return (
-    <View className="flex items-center justify-center gap-2">
+    <View className="flex items-center justify-center">
       <Image
         source={icon}
         resizeMode="contain"
         tintColor={color}
-        className="w-6 h-6"
+        className="w-6 h-7 mb-1" // ✅ Adjusted spacing to fix layout
       />
       <Text
         className={`${focused ? "font-psemibold" : "font-pregular"} text-xs`}
-        style={{ color: color }}
+        style={{ color: color, textAlign: "center" }}
       >
         {name}
       </Text>
@@ -38,10 +38,9 @@ const TabLayout = () => {
           tabBarInactiveTintColor: "#CDCDE0",
           tabBarShowLabel: false,
           tabBarStyle: {
-            backgroundColor: "#161622",
-            borderTopWidth: 1,
-            borderTopColor: "#232533",
-            height: 84,
+            backgroundColor: "purple",
+            height: 60,
+            borderTopWidth: 0, // ✅ Removed border to fix line issue
           },
         }}
       >
@@ -67,16 +66,14 @@ const TabLayout = () => {
             headerShown: false,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                icon={icons.bookmark}
+                icon={icons.invoice}
                 color={color}
-                name="Bookmark"
+                name="Invoices"
                 focused={focused}
               />
             ),
           }}
         />
-
-        
         <Tabs.Screen
           name="profile"
           options={{

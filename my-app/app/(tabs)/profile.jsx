@@ -34,7 +34,7 @@ const Profile = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full flex justify-center items-center px-4">
-      {/* Logout Button (Now properly visible) */}
+      {/* Logout Button */}
       <TouchableOpacity
         onPress={logout}
         className="absolute top-12 right-5 p-2"
@@ -55,9 +55,9 @@ const Profile = () => {
         />
       </View>
 
-      {/* User Name */}
+      {/* ✅ Updated User Name Display */}
       <Text className="text-white text-lg font-semibold mt-4">
-        {user?.username || "User"}
+        {user?.name || "User"}  
       </Text>
 
       {/* Recent Invoices History */}

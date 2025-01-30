@@ -1,87 +1,79 @@
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Image, FlatList, TouchableOpacity, Text } from "react-native";
+import { View, Image, TouchableOpacity, Text, FlatList } from "react-native";
 
 import { icons } from "../../constants";
-import { getCurrentUser, getAllInvoices, signOut } from "../../lib/appwrite";
-import { EmptyState, InfoBox } from "../../components";
+import { signOut, getAllInvoices } from "../../lib/appwrite";
+import { useGlobalContext } from "../../context/GlobalProvider";
 
 const Profile = () => {
-  const [user, setUser] = useState(null);
+  const { user, setUser, setIsLogged } = useGlobalContext();
   const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch User & Invoices
+  // Fetch invoices on component mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInvoices = async () => {
       try {
-        const currentUser = await getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-          const invoicesData = await getAllInvoices();
-          setInvoices(invoicesData);
-        }
+        const invoicesData = await getAllInvoices();
+        setInvoices(invoicesData.reverse()); // Show recent first
       } catch (error) {
-        console.error("Error fetching profile data:", error.message);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching invoices:", error.message);
       }
     };
 
-    fetchData();
+    fetchInvoices();
   }, []);
 
-  // Handle Logout
   const logout = async () => {
     await signOut();
     setUser(null);
+    setIsLogged(false);
     router.replace("/sign-in");
   };
 
   return (
-    <SafeAreaView className="bg-primary h-full">
+    <SafeAreaView className="bg-primary h-full flex justify-center items-center px-4">
+      {/* Logout Button (Now properly visible) */}
+      <TouchableOpacity
+        onPress={logout}
+        className="absolute top-12 right-5 p-2"
+      >
+        <Image
+          source={icons.logout}
+          resizeMode="contain"
+          className="w-6 h-6"
+        />
+      </TouchableOpacity>
+
+      {/* User Profile Section */}
+      <View className="w-20 h-20 border border-secondary rounded-full flex justify-center items-center">
+        <Image
+          source={{ uri: user?.avatar || "https://via.placeholder.com/150" }}
+          className="w-full h-full rounded-full"
+          resizeMode="cover"
+        />
+      </View>
+
+      {/* User Name */}
+      <Text className="text-white text-lg font-semibold mt-4">
+        {user?.username || "User"}
+      </Text>
+
+      {/* Recent Invoices History */}
+      <Text className="text-gray-300 text-sm mt-6 mb-2">Recent Invoices</Text>
       <FlatList
         data={invoices}
         keyExtractor={(item) => item.$id}
         renderItem={({ item }) => (
-          <View className="bg-gray-800 p-4 rounded-lg mb-3">
+          <View className="bg-gray-800 p-4 rounded-lg mb-3 w-full">
             <Text className="text-white font-bold">{item.clientName}</Text>
             <Text className="text-gray-400">Amount: ₹{item.amount}</Text>
             <Text className="text-gray-400">Due: {item.dueDate}</Text>
           </View>
         )}
         ListEmptyComponent={() => (
-          <EmptyState title="No Invoices" subtitle="You haven't created any invoices yet." />
-        )}
-        ListHeaderComponent={() => (
-          <View className="w-full flex justify-center items-center mt-6 mb-8 px-4">
-            {/* Logout Button */}
-            <TouchableOpacity onPress={logout} className="flex w-full items-end mb-8">
-              <Image source={icons.logout} resizeMode="contain" className="w-6 h-6" />
-            </TouchableOpacity>
-
-            {/* User Profile */}
-            <View className="w-16 h-16 border border-secondary rounded-lg flex justify-center items-center">
-              <Image
-                source={{ uri: user?.avatar || "https://via.placeholder.com/150" }}
-                className="w-[90%] h-[90%] rounded-lg"
-                resizeMode="cover"
-              />
-            </View>
-
-            <InfoBox title={user?.name || "User"} containerStyles="mt-5" titleStyles="text-lg" />
-
-            {/* Invoice Stats */}
-            <View className="mt-5 flex flex-row">
-              <InfoBox
-                title={invoices.length || 0}
-                subtitle="Invoices"
-                titleStyles="text-xl"
-                containerStyles="mr-10"
-              />
-            </View>
-          </View>
+          <Text className="text-gray-500 mt-4">No invoices found.</Text>
         )}
       />
     </SafeAreaView>

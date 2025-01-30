@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "sora",
+    "name": "slip",
     "slug": "sora",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,22 +11,36 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "scheme": "sora",
-    "assetBundlePatterns": ["**/*"],
+    "scheme": "slip",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.uniqueorp.slip"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.jsm.sora"
+      "package": "com.uniqueorp.slip"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-font"],
-    "newArchEnabled": true 
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "newArchEnabled": true,
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "d97555a0-7af8-4bf0-a3ab-ce005de72a54"
+      }
+    }
   }
 }

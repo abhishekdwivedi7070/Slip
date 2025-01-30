@@ -1,4 +1,4 @@
-package com.jsm.sora
+package com.uniqueorp.slip
 
 import android.os.Build
 import android.os.Bundle

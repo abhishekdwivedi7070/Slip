@@ -86,9 +86,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.jsm.sora'
+    namespace 'com.uniqueorp.slip'
     defaultConfig {
-        applicationId 'com.jsm.sora'
+        applicationId 'com.uniqueorp.slip'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -31,13 +30,13 @@ const Home = () => {
       Alert.alert("Error", "Please fill all fields");
       return;
     }
-  
+
     // Validate Mobile Number as String
     if (!/^\d{10,15}$/.test(form.mobileNumber)) {
       Alert.alert("Error", "Invalid mobile number format (must be 10-15 digits)");
       return;
     }
-  
+
     try {
       const result = await createInvoice(
         form.clientName,
@@ -46,7 +45,7 @@ const Home = () => {
         form.billingDate,
         form.dueDate
       );
-  
+
       console.log("Invoice successfully created:", result);
 
       // Reset Form
@@ -60,9 +59,11 @@ const Home = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-900 px-4">
+    <SafeAreaView className="flex-1 bg-gray-900 px-4 pt-10">  
+      {/* 🔹 Added `pt-10` for proper top padding to avoid notch overlap */}
+
       {/* Header */}
-      <View className="mt-6 mb-4">
+      <View className="mt-2 mb-4">
         <Text className="text-3xl font-bold text-white">Invoice Builder</Text>
         <Text className="text-gray-400">Manage your invoices easily</Text>
       </View>

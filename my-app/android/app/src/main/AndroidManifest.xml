@@ -26,8 +26,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="sora"/>
-        <data android:scheme="com.jsm.sora"/>
+        <data android:scheme="slip"/>
+        <data android:scheme="com.uniqueorp.slip"/>
       </intent-filter>
     </activity>
   </application>

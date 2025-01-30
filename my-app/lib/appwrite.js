@@ -1,22 +1,23 @@
 import { Account, Client, Databases, ID, Query } from "react-native-appwrite";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import { printToFileAsync } from "expo-print";
 
-// 🔹 Update Appwrite Configuration
+// 🔹 Appwrite Configuration
 export const appwriteConfig = {
-  endpoint: "https://cloud.appwrite.io/v1", // Appwrite API endpoint
-  projectId: "6799cf36003b5ae5095b", // Your Appwrite Project ID
-  databaseId: "6799d01c002c1c088d50", // Your Appwrite Database ID
-  invoiceCollectionId: "6799d02f000f1acf857d", // Your Invoice Collection ID
+  endpoint: "https://cloud.appwrite.io/v1",
+  projectId: "6799cf36003b5ae5095b",
+  databaseId: "6799d01c002c1c088d50",
+  invoiceCollectionId: "6799d02f000f1acf857d",
 };
 
 // 🔹 Initialize Appwrite Client
 const client = new Client();
-client
-  .setEndpoint(appwriteConfig.endpoint) // Set API Endpoint
-  .setProject(appwriteConfig.projectId); // Set Project ID
+client.setEndpoint(appwriteConfig.endpoint).setProject(appwriteConfig.projectId);
 
 // 🔹 Initialize Services
-const account = new Account(client); // User Authentication
-const databases = new Databases(client); // Database Access
+const account = new Account(client);
+const databases = new Databases(client);
 
 // ✅ 1️⃣ User Authentication Functions
 
@@ -43,23 +44,29 @@ export async function signIn(email, password) {
   }
 }
 
+// ✅ Add this function inside appwrite.js
+export async function signOut() {
+  try {
+    await account.deleteSession("current"); // Delete current user session
+    console.log("User signed out successfully.");
+    return true;
+  } catch (error) {
+    console.error("Failed to sign out:", error.message);
+    throw new Error(error.message);
+  }
+}
+
+
 // Get Current User
 export async function getCurrentUser() {
   try {
     return await account.get();
   } catch (error) {
-    return null; // Return null if user is not logged in
+    console.warn("User session not found or expired.");
+    return null;
   }
 }
 
-// Sign Out
-export async function signOut() {
-  try {
-    return await account.deleteSession("current");
-  } catch (error) {
-    throw new Error(error.message);
-  }
-}
 
 // ✅ 2️⃣ Invoice Management Functions
 
@@ -72,26 +79,21 @@ export async function createInvoice(clientName, mobileNumber, amount, billingDat
     if (!clientName || !mobileNumber || !amount || !billingDate || !dueDate)
       throw new Error("Missing fields");
 
-    // Convert Amount to Number
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount)) throw new Error("Invalid amount format");
 
-    // Ensure Mobile Number is a String
-    const mobileNumberString = String(mobileNumber); 
-
-    // Validate Mobile Number Format
+    const mobileNumberString = String(mobileNumber);
     if (!/^\d{10,15}$/.test(mobileNumberString)) {
       throw new Error("Invalid mobile number format (must be 10-15 digits)");
     }
 
-    // Create Invoice Entry
     const newInvoice = await databases.createDocument(
       appwriteConfig.databaseId,
       appwriteConfig.invoiceCollectionId,
       ID.unique(),
       {
         clientName,
-        mobileNumber: mobileNumberString,  // 🔹 Ensure it's a string here
+        mobileNumber: mobileNumberString,
         amount: parsedAmount,
         billingDate,
         dueDate,
@@ -107,7 +109,6 @@ export async function createInvoice(clientName, mobileNumber, amount, billingDat
   }
 }
 
-
 // 🔹 Function to Fetch All Invoices
 export async function getAllInvoices() {
   try {
@@ -121,6 +122,7 @@ export async function getAllInvoices() {
     throw new Error(error.message);
   }
 }
+
 // 🔹 Function to Delete Invoice
 export async function deleteInvoice(invoiceId) {
   try {
@@ -137,4 +139,46 @@ export async function deleteInvoice(invoiceId) {
   }
 }
 
+// ✅ 3️⃣ PDF Generation & Download Function
 
+export async function downloadInvoiceAsPDF(invoice) {
+  try {
+    const html = `
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { text-align: center; color: #333; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f4f4f4; }
+          </style>
+        </head>
+        <body>
+          <h1>Invoice</h1>
+          <table>
+            <tr><th>Client Name</th><td>${invoice.clientName}</td></tr>
+            <tr><th>Mobile Number</th><td>${invoice.mobileNumber}</td></tr>
+            <tr><th>Amount</th><td>₹${invoice.amount}</td></tr>
+            <tr><th>Billing Date</th><td>${invoice.billingDate}</td></tr>
+            <tr><th>Due Date</th><td>${invoice.dueDate}</td></tr>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const file = await printToFileAsync({ html, base64: false });
+    const pdfUri = `${FileSystem.documentDirectory}invoice_${invoice.$id}.pdf`;
+
+    await FileSystem.moveAsync({
+      from: file.uri,
+      to: pdfUri,
+    });
+
+    await Sharing.shareAsync(pdfUri, { mimeType: "application/pdf" });
+    return pdfUri;
+  } catch (error) {
+    console.error("Failed to generate PDF:", error.message);
+    throw new Error("Failed to generate PDF");
+  }
+}

@@ -38,11 +38,12 @@ export async function createUser(email, password, username) {
 // Sign In
 export async function signIn(email, password) {
   try {
-    return await account.createEmailSession(email, password);
+    return await account.createEmailPasswordSession(email, password);
   } catch (error) {
     throw new Error(error.message);
   }
 }
+
 
 // ✅ Add this function inside appwrite.js
 export async function signOut() {

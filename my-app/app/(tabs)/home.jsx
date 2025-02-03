@@ -21,6 +21,7 @@ const Home = () => {
     amount: "",
     billingDate: "",
     dueDate: "",
+    imageLink: "", // ✅ New field for Image Link
   });
 
   // States for Date Picker Visibility
@@ -60,13 +61,14 @@ const Home = () => {
         String(form.mobileNumber),
         form.amount,
         form.billingDate,
-        form.dueDate
+        form.dueDate,
+        form.imageLink // ✅ Include image link in invoice creation
       );
 
       console.log("Invoice successfully created:", result);
 
       // Reset Form
-      setForm({ clientName: "", mobileNumber: "", amount: "", billingDate: "", dueDate: "" });
+      setForm({ clientName: "", mobileNumber: "", amount: "", billingDate: "", dueDate: "", imageLink: "" });
 
       Alert.alert("Success", "Invoice created successfully!");
     } catch (error) {
@@ -95,6 +97,15 @@ const Home = () => {
 
           {/* Invoice Form */}
           <View className="bg-gray-800 p-4 rounded-2xl mb-6">
+            <Text className="text-white mb-2">Image Link</Text>
+            <TextInput
+              className="bg-gray-700 text-white p-3 rounded-lg mb-3"
+              placeholder="Enter image link (optional)"
+              placeholderTextColor="#A0A0A0"
+              value={form.imageLink}
+              onChangeText={(text) => handleChange("imageLink", text)}
+            />
+
             <Text className="text-white mb-2">Client Name</Text>
             <TextInput
               className="bg-gray-700 text-white p-3 rounded-lg mb-3"

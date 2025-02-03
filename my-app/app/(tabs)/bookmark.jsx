@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Text, FlatList, View, RefreshControl, TouchableOpacity, Alert } from "react-native";
+import { Text, FlatList, View, RefreshControl, TouchableOpacity, Alert, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getAllInvoices, deleteInvoice, downloadInvoiceAsPDF } from "../../lib/appwrite";
 
@@ -63,12 +63,26 @@ const Bookmark = () => {
         renderItem={({ item }) => (
           <View className="bg-gray-800 p-4 rounded-lg mb-3">
             <Text className="text-white font-bold">{item.clientName}</Text>
-            <TouchableOpacity className="bg-red-500 px-3 py-2 rounded-l mr-2" onPress={() => handleDelete(item.$id)}>
-              <Text className="text-white">Delete</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="bg-blue-500 px-3 py-2 rounded-lg" onPress={() => handleDownload(item)}>
-              <Text className="text-white">Download PDF</Text>
-            </TouchableOpacity>
+
+            <View className="flex-row mt-3">
+              <TouchableOpacity className="bg-red-500 px-3 py-2 rounded-l mr-2" onPress={() => handleDelete(item.$id)}>
+                <Text className="text-white">Delete</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity className="bg-blue-500 px-3 py-2 rounded-lg mr-2" onPress={() => handleDownload(item)}>
+                <Text className="text-white">Download PDF</Text>
+              </TouchableOpacity>
+
+              {/* ✅ New View Image Button */}
+              {item.imageLink ? (
+                <TouchableOpacity
+                  className="bg-green-500 px-3 py-2 rounded-lg"
+                  onPress={() => Linking.openURL(item.imageLink)}
+                >
+                  <Text className="text-white">View Image</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
           </View>
         )}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}

@@ -21,7 +21,7 @@ const Home = () => {
     amount: "",
     billingDate: "",
     dueDate: "",
-    imageLink: "", // ✅ New field for Image Link
+    imageLink: "", // New field for Image Link
   });
 
   // States for Date Picker Visibility
@@ -49,7 +49,7 @@ const Home = () => {
       return;
     }
 
-    // ✅ Validate Mobile Number: Must be between 10 and 12 digits
+    //  Validate Mobile Number: Must be between 10 and 12 digits
     if (!/^\d{10,12}$/.test(form.mobileNumber)) {
       Alert.alert("Error", "Mobile number must be between 10 to 12 digits");
       return;
@@ -62,7 +62,7 @@ const Home = () => {
         form.amount,
         form.billingDate,
         form.dueDate,
-        form.imageLink // ✅ Include image link in invoice creation
+        form.imageLink //  Include image link in invoice creation
       );
 
       console.log("Invoice successfully created:", result);
@@ -152,7 +152,7 @@ const Home = () => {
               />
             )}
 
-            {/* ✅ Due Date Picker */}
+            {/*  Due Date Picker */}
             <Text className="text-white mb-2">Due Date</Text>
             <TouchableOpacity 
               className="bg-gray-700 text-white p-3 rounded-lg mb-3"

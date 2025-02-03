@@ -19,7 +19,7 @@ client.setEndpoint(appwriteConfig.endpoint).setProject(appwriteConfig.projectId)
 const account = new Account(client);
 const databases = new Databases(client);
 
-// ✅ 1️⃣ User Authentication Functions
+//  User Authentication Functions
 
 // Register User
 export async function createUser(email, password, username) {
@@ -45,7 +45,7 @@ export async function signIn(email, password) {
 }
 
 
-// ✅ Add this function inside appwrite.js
+//  Add this function inside appwrite.js
 export async function signOut() {
   try {
     await account.deleteSession("current"); // Delete current user session
@@ -69,7 +69,7 @@ export async function getCurrentUser() {
 }
 
 
-// ✅ 2️⃣ Invoice Management Functions
+//  Invoice Management Functions
 
 // 🔹 Function to Create Invoice
 export async function createInvoice(clientName, mobileNumber, amount, billingDate, dueDate) {
@@ -121,13 +121,13 @@ export async function getAllInvoices() {
 
     // Check if the user has an "admin" label
     if (user.labels && user.labels.includes("admin")) {
-      // ✅ Admin: Fetch all invoices
+      //  Admin: Fetch all invoices
       invoices = await databases.listDocuments(
         appwriteConfig.databaseId,
         appwriteConfig.invoiceCollectionId
       );
     } else {
-      // ✅ Normal User: Fetch only invoices created by them
+      //  Normal User: Fetch only invoices created by them
       invoices = await databases.listDocuments(
         appwriteConfig.databaseId,
         appwriteConfig.invoiceCollectionId,

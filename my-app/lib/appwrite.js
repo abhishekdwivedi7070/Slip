@@ -1,4 +1,4 @@
-import { Account, Client, Databases, ID, Query, Storage, InputFile } from "react-native-appwrite";
+import { Account, Client, Databases, ID, Query } from "react-native-appwrite";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { printToFileAsync } from "expo-print";
@@ -9,7 +9,6 @@ export const appwriteConfig = {
   projectId: "6799cf36003b5ae5095b",
   databaseId: "6799d01c002c1c088d50",
   invoiceCollectionId: "6799d02f000f1acf857d",
-  bucketId: "67a07f22003cca390dcb",
 };
 
 // 🔹 Initialize Appwrite Client
@@ -19,15 +18,16 @@ client.setEndpoint(appwriteConfig.endpoint).setProject(appwriteConfig.projectId)
 // 🔹 Initialize Services
 const account = new Account(client);
 const databases = new Databases(client);
-const storage = new Storage(client);
 
-// User Authentication Functions
+// ✅ 1️⃣ User Authentication Functions
 
+// Register User
 export async function createUser(email, password, username) {
   try {
     const newAccount = await account.create(ID.unique(), email, password, username);
     if (!newAccount) throw new Error("Account creation failed");
 
+    // Auto Sign-in After Registration
     await signIn(email, password);
     return newAccount;
   } catch (error) {
@@ -35,6 +35,7 @@ export async function createUser(email, password, username) {
   }
 }
 
+// Sign In
 export async function signIn(email, password) {
   try {
     return await account.createEmailSession(email, password);
@@ -43,9 +44,10 @@ export async function signIn(email, password) {
   }
 }
 
+// ✅ Add this function inside appwrite.js
 export async function signOut() {
   try {
-    await account.deleteSession("current");
+    await account.deleteSession("current"); // Delete current user session
     console.log("User signed out successfully.");
     return true;
   } catch (error) {
@@ -54,24 +56,35 @@ export async function signOut() {
   }
 }
 
+
+// Get Current User
 export async function getCurrentUser() {
   try {
     return await account.get();
   } catch (error) {
-    console.warn("⚠ User session not found or expired.");
+    console.warn("User session not found or expired.");
     return null;
   }
 }
 
-// Invoice Management Functions
-export async function createInvoice(clientName, mobileNumber, amount, billingDate, dueDate, fileUri) {
-  try {
-    const user = await getCurrentUser();
-    if (!user || !user.$id) throw new Error("User not authenticated");
 
-    let uploadedFileId = null;
-    if (fileUri) {
-      uploadedFileId = await uploadInvoiceFile(fileUri);
+// ✅ 2️⃣ Invoice Management Functions
+
+// 🔹 Function to Create Invoice
+export async function createInvoice(clientName, mobileNumber, amount, billingDate, dueDate) {
+  try {
+    const user = await account.get();
+    if (!user) throw new Error("User not authenticated");
+
+    if (!clientName || !mobileNumber || !amount || !billingDate || !dueDate)
+      throw new Error("Missing fields");
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount)) throw new Error("Invalid amount format");
+
+    const mobileNumberString = String(mobileNumber);
+    if (!/^\d{10,15}$/.test(mobileNumberString)) {
+      throw new Error("Invalid mobile number format (must be 10-15 digits)");
     }
 
     const newInvoice = await databases.createDocument(
@@ -80,73 +93,54 @@ export async function createInvoice(clientName, mobileNumber, amount, billingDat
       ID.unique(),
       {
         clientName,
-        mobileNumber,
-        amount,
+        mobileNumber: mobileNumberString,
+        amount: parsedAmount,
         billingDate,
         dueDate,
-        uploadedInvoice: uploadedFileId,
         userId: user.$id,
       }
     );
 
-    console.log(" Invoice Created:", newInvoice);
+    console.log("Invoice Created:", newInvoice);
     return newInvoice;
   } catch (error) {
-    console.error(" Failed to create invoice:", error.message);
+    console.error("Failed to create invoice:", error.message);
     throw new Error(error.message);
   }
 }
 
-// 🔹 Function to Upload Invoice File
-
-export async function uploadInvoiceFile(fileUri) {
-  try {
-    console.log("🔹 Uploading File:", fileUri);
-
-    const fileInfo = await FileSystem.getInfoAsync(fileUri);
-    if (!fileInfo.exists) throw new Error(" File does not exist at URI: " + fileUri);
-
-    
-    const response = await storage.createFile(
-      appwriteConfig.bucketId,
-      ID.unique(),
-      { uri: fileUri, name: "invoice.pdf", type: "application/pdf" }
-    );
-    
-    
-
-    console.log(" File Upload Successful:", response);
-    return response?.$id;
-  } catch (error) {
-    console.error(" File Upload Failed:", error.message);
-    throw error;
-  }
-}
-
-// 🔹 Function to Fetch Invoices
+// 🔹 Function to Fetch All Invoices
+// 🔹 Function to Fetch Invoices Based on User Role
 export async function getAllInvoices() {
   try {
-    const user = await getCurrentUser();
-    if (!user || !user.$id) throw new Error("User not authenticated");
+    const user = await account.get(); // Get the currently logged-in user
+    if (!user) throw new Error("User not authenticated");
 
-    let query = [];
+    let invoices;
 
-    if (!user.labels || !user.labels.includes("admin")) {
-      query.push(Query.equal("userId", user.$id));
+    // Check if the user has an "admin" label
+    if (user.labels && user.labels.includes("admin")) {
+      // ✅ Admin: Fetch all invoices
+      invoices = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.invoiceCollectionId
+      );
+    } else {
+      // ✅ Normal User: Fetch only invoices created by them
+      invoices = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.invoiceCollectionId,
+        [Query.equal("userId", user.$id)] // 🔹 Filter by userId
+      );
     }
-
-    const invoices = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.invoiceCollectionId,
-      query.length ? query : undefined
-    );
 
     return invoices.documents;
   } catch (error) {
-    console.error(" Failed to fetch invoices:", error.message);
+    console.error("Failed to fetch invoices:", error.message);
     throw new Error(error.message);
   }
 }
+
 
 // 🔹 Function to Delete Invoice
 export async function deleteInvoice(invoiceId) {
@@ -156,15 +150,16 @@ export async function deleteInvoice(invoiceId) {
       appwriteConfig.invoiceCollectionId,
       invoiceId
     );
-    console.log(" Invoice deleted successfully:", invoiceId);
+    console.log("Invoice deleted successfully:", invoiceId);
     return true;
   } catch (error) {
-    console.error(" Failed to delete invoice:", error.message);
+    console.error("Failed to delete invoice:", error.message);
     throw new Error(error.message);
   }
 }
 
-// 🔹 Function to Download & Share Invoice as PDF
+//  3 PDF Generation & Download Function
+
 export async function downloadInvoiceAsPDF(invoice) {
   try {
     const html = `
@@ -202,7 +197,7 @@ export async function downloadInvoiceAsPDF(invoice) {
     await Sharing.shareAsync(pdfUri, { mimeType: "application/pdf" });
     return pdfUri;
   } catch (error) {
-    console.error(" Failed to generate PDF:", error.message);
+    console.error("Failed to generate PDF:", error.message);
     throw new Error("Failed to generate PDF");
   }
 }

@@ -13,7 +13,7 @@ const TabIcon = ({ icon, color, name, focused }) => {
         source={icon}
         resizeMode="contain"
         tintColor={color}
-        className="w-6 h-7 mb-1" // ✅ Adjusted spacing to fix layout
+        className="w-6 h-7 mb-1" //  Adjusted spacing to fix layout
       />
       <Text
         className={`${focused ? "font-psemibold" : "font-pregular"} text-xs`}
@@ -40,7 +40,7 @@ const TabLayout = () => {
           tabBarStyle: {
             backgroundColor: "purple",
             height: 60,
-            borderTopWidth: 0, // ✅ Removed border to fix line issue
+            borderTopWidth: 0, //  Removed border to fix line issue
           },
         }}
       >

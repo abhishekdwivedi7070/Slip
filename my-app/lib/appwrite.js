@@ -158,7 +158,7 @@ export async function deleteInvoice(invoiceId) {
   }
 }
 
-// ✅ 3️⃣ PDF Generation & Download Function
+//  3 PDF Generation & Download Function
 
 export async function downloadInvoiceAsPDF(invoice) {
   try {

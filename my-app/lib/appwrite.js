@@ -19,15 +19,12 @@ client.setEndpoint(appwriteConfig.endpoint).setProject(appwriteConfig.projectId)
 const account = new Account(client);
 const databases = new Databases(client);
 
-//  User Authentication Functions
-
-// Register User
+// ✅ 1️⃣ User Authentication Functions
 export async function createUser(email, password, username) {
   try {
     const newAccount = await account.create(ID.unique(), email, password, username);
     if (!newAccount) throw new Error("Account creation failed");
 
-    // Auto Sign-in After Registration
     await signIn(email, password);
     return newAccount;
   } catch (error) {
@@ -35,7 +32,6 @@ export async function createUser(email, password, username) {
   }
 }
 
-// Sign In
 export async function signIn(email, password) {
   try {
     return await account.createEmailPasswordSession(email, password);
@@ -45,34 +41,27 @@ export async function signIn(email, password) {
 }
 
 
-//  Add this function inside appwrite.js
 export async function signOut() {
   try {
-    await account.deleteSession("current"); // Delete current user session
-    console.log("User signed out successfully.");
+    await account.deleteSession("current");
     return true;
   } catch (error) {
-    console.error("Failed to sign out:", error.message);
     throw new Error(error.message);
   }
 }
 
-
-// Get Current User
 export async function getCurrentUser() {
   try {
     return await account.get();
   } catch (error) {
-    console.warn("User session not found or expired.");
     return null;
   }
 }
 
+// ✅ 2️⃣ Invoice Management Functions
 
-//  Invoice Management Functions
-
-// 🔹 Function to Create Invoice
-export async function createInvoice(clientName, mobileNumber, amount, billingDate, dueDate) {
+// 🔹 Function to Create Invoice (Now Supports Image Links)
+export async function createInvoice(clientName, mobileNumber, amount, billingDate, dueDate, imageLink) {
   try {
     const user = await account.get();
     if (!user) throw new Error("User not authenticated");
@@ -99,51 +88,44 @@ export async function createInvoice(clientName, mobileNumber, amount, billingDat
         billingDate,
         dueDate,
         userId: user.$id,
+        imageLink: imageLink || "", // 🔹 Storing Image Link
       }
     );
 
-    console.log("Invoice Created:", newInvoice);
     return newInvoice;
   } catch (error) {
-    console.error("Failed to create invoice:", error.message);
     throw new Error(error.message);
   }
 }
 
-// 🔹 Function to Fetch All Invoices
-// 🔹 Function to Fetch Invoices Based on User Role
+// 🔹 Function to Fetch All Invoices (Unchanged)
 export async function getAllInvoices() {
   try {
-    const user = await account.get(); // Get the currently logged-in user
+    const user = await account.get();
     if (!user) throw new Error("User not authenticated");
 
     let invoices;
 
-    // Check if the user has an "admin" label
     if (user.labels && user.labels.includes("admin")) {
-      //  Admin: Fetch all invoices
       invoices = await databases.listDocuments(
         appwriteConfig.databaseId,
         appwriteConfig.invoiceCollectionId
       );
     } else {
-      //  Normal User: Fetch only invoices created by them
       invoices = await databases.listDocuments(
         appwriteConfig.databaseId,
         appwriteConfig.invoiceCollectionId,
-        [Query.equal("userId", user.$id)] // 🔹 Filter by userId
+        [Query.equal("userId", user.$id)]
       );
     }
 
     return invoices.documents;
   } catch (error) {
-    console.error("Failed to fetch invoices:", error.message);
     throw new Error(error.message);
   }
 }
 
-
-// 🔹 Function to Delete Invoice
+// 🔹 Function to Delete Invoice (Unchanged)
 export async function deleteInvoice(invoiceId) {
   try {
     await databases.deleteDocument(
@@ -151,18 +133,19 @@ export async function deleteInvoice(invoiceId) {
       appwriteConfig.invoiceCollectionId,
       invoiceId
     );
-    console.log("Invoice deleted successfully:", invoiceId);
     return true;
   } catch (error) {
-    console.error("Failed to delete invoice:", error.message);
     throw new Error(error.message);
   }
 }
 
-//  3 PDF Generation & Download Function
-
+// 🔹 Updated Function to Generate PDF (Now Includes Clickable Image Link)
 export async function downloadInvoiceAsPDF(invoice) {
   try {
+    const imageHtml = invoice.imageLink
+      ? `<tr><th>Invoice Image</th><td><a href="${invoice.imageLink}" target="_blank">View Image</a></td></tr>`
+      : "";
+
     const html = `
       <html>
         <head>
@@ -182,6 +165,7 @@ export async function downloadInvoiceAsPDF(invoice) {
             <tr><th>Amount</th><td>₹${invoice.amount}</td></tr>
             <tr><th>Billing Date</th><td>${invoice.billingDate}</td></tr>
             <tr><th>Due Date</th><td>${invoice.dueDate}</td></tr>
+            ${imageHtml}
           </table>
         </body>
       </html>
@@ -198,7 +182,6 @@ export async function downloadInvoiceAsPDF(invoice) {
     await Sharing.shareAsync(pdfUri, { mimeType: "application/pdf" });
     return pdfUri;
   } catch (error) {
-    console.error("Failed to generate PDF:", error.message);
     throw new Error("Failed to generate PDF");
   }
 }
